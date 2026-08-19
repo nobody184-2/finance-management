@@ -14,22 +14,55 @@ app.add_middleware(
 
 
 
-@app.get("/students")
-def get_students():
+@app.get("/finance")
+def get_finance_data():
 
-    query = text("SELECT * FROM students")
+    query = text("SELECT * FROM finance")
 
     with engine.connect() as connection:
         result = connection.execute(query)
 
-        students = []
+        finance_data = []
 
         for row in result:
-            students.append({
+            finance_data.append({
                 "id": row.id,
-                "name": row.name,
-                "age": row.age,
-                "grade": row.grade
+                "date": row.date,
+                "amount": row.amount,
+                "type": row.type
             })
 
-    return students
+    return finance_data
+
+@app.get("/incomes")
+def get_incomes():
+    query = text("SELECT sum(amount) FROM finance WHERE amount > 0")
+
+    with engine.connect() as connection:
+        result = connection.execute(query)
+
+        
+
+    return result.scalar() or 0
+
+@app.get("/expenses")
+def get_expenses():
+    query = text("SELECT sum(amount) FROM finance WHERE amount < 0")
+
+    with engine.connect() as connection:
+        result = connection.execute(query)
+
+        
+
+    return result.scalar() or 0
+
+@app.get("/balance")
+def get_balance():
+    query = text("SELECT sum(amount) FROM finance")
+
+    with engine.connect() as connection:
+        result = connection.execute(query)
+
+        
+
+    return result.scalar() or 0

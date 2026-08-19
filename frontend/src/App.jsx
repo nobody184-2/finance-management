@@ -11,19 +11,37 @@ import {
 import './App.css';
 
 function App() {
-    const [students, setStudents] = useState([]);
+    const [data, setdata] = useState([]);
 
     useEffect(() => {
-        fetch("http://127.0.0.1:8000/students")
+        fetch("http://127.0.0.1:8000/finance")
             .then(response => response.json())
             .then(data => {
-                setStudents(data);
+                setdata(data);
             });
     }, []);
 
-    const total = students.length;
-    const avgGrade = total ? (students.reduce((s, st) => s + (st.grade || 0), 0) / total).toFixed(1) : '—';
-    const avgAge = total ? (students.reduce((s, st) => s + (st.age || 0), 0) / total).toFixed(1) : '—';
+    const [incomes, setIncomes] = useState(0);
+    const [expenses, setExpenses] = useState(0);
+    const [balance, setBalance] = useState(0);
+
+    useEffect(() => {
+        fetch("http://127.0.0.1:8000/incomes")
+            .then(response => response.json())
+            .then(data => setIncomes(data));
+
+        fetch("http://127.0.0.1:8000/expenses")
+            .then(response => response.json())
+            .then(data => setExpenses(data));
+
+        fetch("http://127.0.0.1:8000/balance")
+            .then(response => response.json())
+            .then(data => setBalance(data));
+    }, []);
+
+    const total = data.length;
+    const avgGrade = total ? (data.reduce((s, d) => s + (d.grade || 0), 0) / total).toFixed(1) : '—';
+    const avgAge = total ? (data.reduce((s, d) => s + (d.age || 0), 0) / total).toFixed(1) : '—';
 
     return (
         <div className="app">
@@ -47,21 +65,21 @@ function App() {
                 <section className="cards">
                     <div className="card">
                         <div className="card-title">Total Incomes</div>
-                        <div className="card-value">{total}</div>
+                        <div className="card-value">{incomes}</div>
                     </div>
                     <div className="card">
                         <div className="card-title">Total Expenses</div>
-                        <div className="card-value">{avgGrade}</div>
+                        <div className="card-value">{expenses}</div>
                     </div>
                     <div className="card">
                         <div className="card-title">Total Balance</div>
-                        <div className="card-value">{avgAge}</div>
+                        <div className="card-value">{balance}</div>
                     </div>
                 </section>
 
                 <section className="chart">
                     <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={students} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
+                        <LineChart data={data} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
                             <CartesianGrid strokeDasharray="3 3" />
                             <XAxis dataKey="age" />
                             <YAxis />
@@ -74,23 +92,23 @@ function App() {
                 <section className="list">
                     <h2>Transactions History</h2>
                     <div className="table-wrapper">
-                        {students.length === 0 ? (
+                        {data.length === 0 ? (
                             <p>No transactions yet.</p>
                         ) : (
                             <table className="students-table">
                                 <thead>
                                     <tr>
-                                        <th>Name</th>
-                                        <th>Age</th>
-                                        <th>Grade</th>
+                                        <th>date</th>
+                                        <th>amount</th>
+                                        <th>type</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {students.map(student => (
-                                        <tr key={student.id}>
-                                            <td>{student.name}</td>
-                                            <td>{student.age}</td>
-                                            <td>{student.grade}</td>
+                                    {data.map(data => (
+                                        <tr key={data.id}>
+                                            <td>{data.date}</td>
+                                            <td>{data.amount}</td>
+                                            <td>{data.type}</td>
                                         </tr>
                                     ))}
                                 </tbody>

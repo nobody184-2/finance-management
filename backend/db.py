@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine
 
-DATABASE_URL = "mysql+pymysql://root:S1352859ip!@localhost/university"
+DATABASE_URL = "mysql+pymysql://root:S1352859ip!@localhost/finance_db"
 
 engine = create_engine(DATABASE_URL)
