@@ -257,3 +257,27 @@ html, body, #root { height: 100%; margin: 0; width : 100%; }
 .table-wrapper { max-height: 40vh; overflow: auto; }
 .students-table tbody tr td { white-space: nowrap; }
 
+/* FinancialInput component styles (appended) */
+.fm-page { font-family: 'Segoe UI', Roboto, Arial, sans-serif; padding: 20px; max-width: 960px; margin: 0 auto; }
+.fm-card { background: #fff; padding: 16px; border-radius:8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); margin-bottom:16px; }
+.fm-form { margin-top: 8px; }
+.fm-form-grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap:12px; align-items:end; }
+.fm-form-grid label { display:block; margin-bottom:6px; font-size:0.95rem; color:#374151; }
+.fm-input, .fm-select { width:100%; padding:8px 10px; border-radius:4px; border:1px solid #ccc; box-sizing:border-box; }
+.fm-actions { display:flex; gap:8px; }
+.fm-btn-primary { background: #2b6cb0; color:#fff; padding:10px 14px; border:none; border-radius:4px; cursor:pointer; }
+.fm-btn-secondary { background:#edf2f7; color:#222; padding:8px 12px; border:none; border-radius:4px; cursor:pointer; }
+.fm-list-table { width:100%; border-collapse: collapse; }
+.fm-list-table th { text-align:left; padding:8px 6px; border-bottom:1px solid #eee; font-weight:600; color:#374151; }
+.fm-list-table td { padding:8px 6px; border-bottom:1px solid #fafafa; color:#111827; }
+.fm-pill { display:inline-block; padding:4px 8px; border-radius:999px; background:#edf2f7; margin-right:6px; font-size:0.95rem; }
+.fm-balance.positive { background: #e6fffa; }
+.fm-balance.negative { background: #fff5f5; }
+.fm-message { margin-top:12px; }
+.fm-message.error { color: #c53030; }
+.fm-message.success { color: #2f855a; }
+.fm-footer { text-align:center; color: #718096; margin-top:24px; }
+.fm-list-table button { padding:6px 8px; border-radius:4px; border:none; cursor:pointer; }
+@media (max-width:520px) {
+  .fm-form-grid { grid-template-columns: 1fr; }
+}
