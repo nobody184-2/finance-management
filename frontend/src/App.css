@@ -253,8 +253,18 @@ html, body, #root { height: 100%; margin: 0; width : 100%; }
 .app { height: 100vh; }
 .main { display: flex; flex-direction: column; min-height: 100vh; }
 .chart { height: 35vh; }
-.list { flex: 1 1 auto; overflow: auto; }
-.table-wrapper { max-height: 40vh; overflow: auto; }
+.list {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.table-wrapper {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
 .students-table tbody tr td { white-space: nowrap; }
 
 /* FinancialInput component styles (appended) */

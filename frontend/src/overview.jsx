@@ -88,9 +88,8 @@ function ooverview() {
             </LineChart>
           </ResponsiveContainer>
         </section>
-
+        <h2>Transactions History</h2>
         <section className="list">
-          <h2>Transactions History</h2>
           <div className="table-wrapper">
             {data.length === 0 ? (
               <p>No transactions yet.</p>
@@ -100,7 +99,7 @@ function ooverview() {
                   <tr>
                     <th>date</th>
                     <th>amount</th>
-                    <th>type</th>
+                    <th>category</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -108,7 +107,7 @@ function ooverview() {
                     <tr key={row.id}>
                       <td>{row.date}</td>
                       <td style={{ color: row.amount >= 0 ? 'green' : 'red' }}>{row.amount}</td>
-                      <td>{row.type}</td>
+                      <td>{row.category}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -1,12 +1,10 @@
-﻿import React, { useState } from 'react';
+﻿import React, { useState ,useEffect} from 'react';
 import './app.css';
 import { useNavigate } from "react-router-dom";
 
 function FinancialInput() {
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
-  const [description, setDescription] = useState('');
+  const [date, setDate] = useState( new Date().toISOString().slice(0, 10));
   const [amount, setAmount] = useState('');
-  const [type, setType] = useState('expense');
   const [category, setCategory] = useState('');
   const [transactions, setTransactions] = useState([]);
   const [message, setMessage] = useState(null);
@@ -14,25 +12,20 @@ function FinancialInput() {
 
   function resetForm() {
     setDate(new Date().toISOString().slice(0, 10));
-    setDescription('');
     setAmount('');
-    setType('expense');
     setCategory('');
   }
 
   function addTransaction(e) {
     e && e.preventDefault();
     const num = parseFloat(amount);
-    if (!description.trim()) { setMessage({ type: 'error', text: 'Description is required.' }); return; }
     if (Number.isNaN(num) || num === 0) { setMessage({ type: 'error', text: 'Enter a non-zero numeric amount.' }); return; }
-
+    const safeCategory = category.trim() || 'General';
     const tx = {
       id: Date.now(),
       date,
-      description: description.trim(),
-      amount: Math.abs(num),
-      type,
-      category: category.trim()
+      amount: num,
+      category: safeCategory
     };
 
     setTransactions(prev => [tx, ...prev]);
@@ -46,7 +39,7 @@ function FinancialInput() {
 
   function getTotals() {
     return transactions.reduce((acc, t) => {
-      if (t.type === 'income') acc.income += t.amount;
+      if (t.amount > 0) acc.income += t.amount;
       else acc.expense += t.amount;
       return acc;
     }, { income: 0, expense: 0 });
@@ -56,7 +49,7 @@ function FinancialInput() {
     if (transactions.length === 0) { setMessage({ type: 'error', text: 'No transactions to submit.' }); return; }
     try {
       // Replace URL with actual backend endpoint as needed
-      const res = await fetch('/api/transactions', {
+      const res = await fetch('http://127.0.0.1:8000/transactions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ transactions })
@@ -71,7 +64,7 @@ function FinancialInput() {
   }
 
   const totals = getTotals();
-  const balance = totals.income - totals.expense;
+  const balance = totals.income + totals.expense;
 
   return (
     <div className="app">
@@ -99,25 +92,10 @@ function FinancialInput() {
               <label htmlFor="date">Date</label>
               <input id="date" type="date" value={date} onChange={e => setDate(e.target.value)} className="fm-input" />
             </div>
-
-            <div>
-              <label htmlFor="description">Description</label>
-              <input id="description" type="text" placeholder="e.g., Grocery, Salary" value={description} onChange={e => setDescription(e.target.value)} className="fm-input" />
-            </div>
-
             <div>
               <label htmlFor="amount">Amount</label>
               <input id="amount" type="number" step="0.01" placeholder="0.00" value={amount} onChange={e => setAmount(e.target.value)} className="fm-input" />
             </div>
-
-            <div>
-              <label htmlFor="type">Type</label>
-              <select id="type" value={type} onChange={e => setType(e.target.value)} className="fm-select">
-                <option value="expense">Expense</option>
-                <option value="income">Income</option>
-              </select>
-            </div>
-
             <div>
               <label htmlFor="category">Category</label>
               <input id="category" type="text" placeholder="e.g., Food, Rent, Salary" value={category} onChange={e => setCategory(e.target.value)} className="fm-input" />
@@ -129,7 +107,6 @@ function FinancialInput() {
             </div>
           </div>
         </form>
-
         {message && (
           <div className={`fm-message ${message.type === 'error' ? 'error' : 'success'}`}>{message.text}</div>
         )}
@@ -151,9 +128,7 @@ function FinancialInput() {
             <thead>
               <tr>
                 <th>Date</th>
-                <th>Description</th>
                 <th>Category</th>
-                <th>Type</th>
                 <th>Amount</th>
                 <th></th>
               </tr>
@@ -162,23 +137,19 @@ function FinancialInput() {
               {transactions.map(tx => (
                 <tr key={tx.id}>
                   <td>{tx.date}</td>
-                  <td>{tx.description}</td>
-                  <td>{tx.category || '-'}</td>
-                  <td>{tx.type}</td>
-                  <td>{(tx.type === 'income' ? '+' : '-')}{tx.amount.toFixed(2)}</td>
+                  <td>{tx.category}</td>
+                  <td>{tx.amount.toFixed(2)}</td>
                   <td><button onClick={() => removeTransaction(tx.id)} className="fm-btn-secondary">Remove</button></td>
                 </tr>
               ))}
             </tbody>
           </table>
         )}
-
         <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
           <button onClick={handleSubmitAll} className="fm-btn-primary">Submit all</button>
           <button onClick={() => setTransactions([])} className="fm-btn-secondary">Clear all</button>
         </div>
       </section>
-
       <footer className="fm-footer">
         Tip: Add transactions as they occur and submit in batches or connect this page to a backend endpoint for immediate persistence.
       </footer>
