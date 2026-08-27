@@ -3,7 +3,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from sqlalchemy import inspect, text
+from sqlalchemy import inspect, select, text
 
 from db import engine
 
@@ -30,7 +30,7 @@ class TransactionList(BaseModel):
 
 @app.get("/finance")
 def get_finance_data():
-   query = text("SELECT * FROM finance ORDER BY date desc, id asc")
+   query = text("SELECT *, SUM(amount) OVER (ORDER BY date, id) AS running_balance FROM finance ORDER BY date desc, id asc")
 
    with engine.connect() as connection:
        result = connection.execute(query)
@@ -40,6 +40,7 @@ def get_finance_data():
                "date": row.date,
                "amount": row.amount,
                "category": row.category,
+               "running_balance": row.running_balance,
            }
            for row in result
        ]
@@ -83,7 +84,7 @@ def get_balance():
 @app.get("/daybalance")
 def get_day_balance():
    query = text(
-       "SELECT date, SUM(amount) AS total FROM finance GROUP BY date ORDER BY date ASC"
+       "select date, sum(daily_amount) over(order by date)as total from (select date, sum(amount)as daily_amount from finance group by date)as s order by date"
    )
 
    with engine.connect() as connection:

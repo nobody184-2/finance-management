@@ -74,7 +74,7 @@ function FinancialInput() {
           <ul>
             <li onClick={() => navigate("/")} >Overview</li>
             <li className="active">Finance</li>
-            <li>Reports</li>
+            <li onClick={() => navigate("/analytics")}>Analytics</li>
             <li>Settings</li>
           </ul>
         </nav>

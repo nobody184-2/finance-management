@@ -51,7 +51,7 @@ function ooverview() {
           <ul>
             <li className="active">Overview</li>
             <li onClick={() => navigate("/financial-input")}>Finance</li>
-            <li>Reports</li>
+            <li onClick={() => navigate("/analytics")}>Analytics</li>
             <li>Settings</li>
           </ul>
         </nav>
@@ -100,6 +100,7 @@ function ooverview() {
                     <th>date</th>
                     <th>amount</th>
                     <th>category</th>
+                    <th>Running Balance</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -108,6 +109,7 @@ function ooverview() {
                       <td>{row.date}</td>
                       <td style={{ color: row.amount >= 0 ? 'green' : 'red' }}>{row.amount}</td>
                       <td>{row.category}</td>
+                      <td>{row.running_balance}</td>
                     </tr>
                   ))}
                 </tbody>

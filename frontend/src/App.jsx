@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import FinancialInput from "./input.jsx";
 import Overview from "./overview.jsx";
+import Analytics from "./analytics.jsx";
 
 function App() {
   return (
@@ -8,6 +9,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Overview />} />
         <Route path="/financial-input" element={<FinancialInput />} />
+        <Route path="/analytics" element={<Analytics />} />
       </Routes>
     </BrowserRouter>
   );
