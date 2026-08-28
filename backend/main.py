@@ -1,10 +1,8 @@
 ﻿from datetime import date
-
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy import inspect, select, text
-
 from db import engine
 
 app = FastAPI()
@@ -17,20 +15,17 @@ app.add_middleware(
    allow_headers=["*"],
 )
 
-
 class Transaction(BaseModel):
    date: date
    amount: float
    category: str = ""
 
-
 class TransactionList(BaseModel):
    transactions: list[Transaction]
 
-
 @app.get("/finance")
 def get_finance_data():
-   query = text("SELECT *, SUM(amount) OVER (ORDER BY date, id) AS running_balance FROM finance ORDER BY date desc, id asc")
+   query = text("SELECT *, SUM(amount) OVER (ORDER BY date, id) AS running_balance FROM finance ORDER BY date desc, id desc")
 
    with engine.connect() as connection:
        result = connection.execute(query)
@@ -47,7 +42,6 @@ def get_finance_data():
 
    return finance_data
 
-
 @app.get("/incomes")
 def get_incomes():
    query = text("SELECT COALESCE(SUM(amount), 0) FROM finance WHERE amount > 0")
@@ -57,7 +51,6 @@ def get_incomes():
        value = result.scalar()
 
    return float(value) if value is not None else 0
-
 
 @app.get("/expenses")
 def get_expenses():
@@ -69,7 +62,6 @@ def get_expenses():
 
    return float(value) if value is not None else 0
 
-
 @app.get("/balance")
 def get_balance():
    query = text("SELECT COALESCE(SUM(amount), 0) FROM finance")
@@ -79,7 +71,6 @@ def get_balance():
        value = result.scalar()
 
    return float(value) if value is not None else 0
-
 
 @app.get("/daybalance")
 def get_day_balance():
@@ -98,6 +89,55 @@ def get_day_balance():
        for row in result
    ]
 
+@app.get("/showexpenses")
+def show_expenses():
+   query = text(
+       """with caltotal as(select category, sum(case when amount < 0 then amount end)as total 
+        from finance group by category having total is not null),
+        calrank as (select category , total, row_number() over(order by total)as ranks 
+        from caltotal order by ranks),
+        setcate as(select (case when ranks > 4 then 'other' else category end) as cate, total
+        from calrank)
+        select cate as category,abs(sum(total))AS total, ROW_NUMBER() OVER (
+        ORDER BY CASE WHEN cate = 'other' THEN 1 ELSE 0 END, ABS(SUM(total)) DESC
+		) AS final_rank from setcate group by cate order by final_rank """
+   )
+
+   with engine.connect() as connection:
+       result = connection.execute(query)
+
+   return [
+       {
+           "category": row.category,
+           "total": float(row.total) if row.total is not None else 0,
+       }
+       for row in result
+   ]
+
+@app.get("/showincomes")
+def show_incomes():
+   query = text(
+       """with caltotal as(select category, sum(case when amount > 0 then amount end)as total 
+        from finance group by category having total is not null),
+        calrank as (select category , total, row_number() over(order by total)as ranks 
+        from caltotal order by ranks),
+        setcate as(select (case when ranks > 4 then 'other' else category end) as cate, total
+        from calrank)
+        select cate as category,abs(sum(total))AS total, ROW_NUMBER() OVER (
+        ORDER BY CASE WHEN cate = 'other' THEN 1 ELSE 0 END, ABS(SUM(total)) DESC
+		) AS final_rank from setcate group by cate order by final_rank """
+   )
+
+   with engine.connect() as connection:
+       result = connection.execute(query)
+
+   return [
+       {
+           "category": row.category,
+           "total": float(row.total) if row.total is not None else 0,
+       }
+       for row in result
+   ]
 
 @app.post("/transactions")
 def add_transaction(payload: TransactionList):
