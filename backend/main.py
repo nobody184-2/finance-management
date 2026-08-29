@@ -139,6 +139,28 @@ def show_incomes():
        for row in result
    ]
 
+@app.get("/getbudget")
+def get_budget():
+   query = text("""with calsum as (select category, sum(case when amount < 0 then amount end)as total
+    from finance group by category having total is not null)
+    select budgets.category, budgets.budget_amount, ABS(COALESCE(calsum.total, 0))as total,
+    budgets.budget_amount + COALESCE(calsum.total, 0) AS remaining
+    from budgets  left join calsum
+    on calsum.category = budgets.category""")
+
+   with engine.connect() as connection:
+       result = connection.execute(query)
+       budget_data = [
+           {
+               "category": row.category,
+               "budget_amount": row.budget_amount,
+               "spent": row.total,
+               "remaining":row.remaining
+           }
+           for row in result
+       ]
+
+   return budget_data
 @app.post("/transactions")
 def add_transaction(payload: TransactionList):
    if not payload.transactions:
@@ -152,3 +174,19 @@ def add_transaction(payload: TransactionList):
            )
            connection.execute(query, {"date": transaction.date, "amount": transaction.amount, "category": transaction.category})
    return {"message": "Transaction added successfully"}
+
+@app.post("/addbudget")
+def add_budget(payload: dict):
+   category = payload.get("category")
+   budget_amount = payload.get("budget_amount")
+
+   if not category or budget_amount is None:
+       raise HTTPException(status_code=400, detail="Category and budget amount are required")
+
+   with engine.begin() as connection:
+       query = text(
+           "INSERT INTO budgets (category, budget_amount) VALUES (:category, :budget_amount)"
+       )
+       connection.execute(query, {"category": category, "budget_amount": budget_amount})
+
+   return {"message": "Budget added successfully"}
