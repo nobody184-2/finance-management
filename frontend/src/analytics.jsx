@@ -11,8 +11,14 @@ function Analytics() {
   const [newBudgetItem, setNewBudgetItem] = useState({
     category: "",
     budget_amount: "",
-    spent: "0"
   });
+  const [budgetError, setBudgetError] = useState("");
+
+  const loadBudget = () => {
+    fetch("http://127.0.0.1:8000/getbudget")
+      .then((response) => response.json())
+      .then((result) => setBudgetRows(Array.isArray(result) ? result : []));
+  };
 
   useEffect(() => {
     fetch("http://127.0.0.1:8000/showexpenses")
@@ -23,9 +29,7 @@ function Analytics() {
       .then((response) => response.json())
       .then((result) => setIncomes(result));
 
-    fetch("http://127.0.0.1:8000/getbudget")
-      .then((response) => response.json())
-      .then((result) => setBudgetRows(Array.isArray(result) ? result : []));
+    loadBudget();
   }, []);
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#A28DFF'];
@@ -36,35 +40,64 @@ function Analytics() {
 
   const handleBudgetInputChange = (event) => {
     const { name, value } = event.target;
+
     setNewBudgetItem((current) => ({
       ...current,
       [name]: value
     }));
-  };
 
-  const handleBudgetSubmit = (event) => {
-    event.preventDefault();
-
-    const category = newBudgetItem.category.trim();
-    const budgetAmount = Number(newBudgetItem.budget_amount);
-    const spentAmount = Number(newBudgetItem.spent || 0);
-
-    if (!category || Number.isNaN(budgetAmount)) {
-      return;
+    if (name === "budget_amount") {
+      const budgetAmount = Number(value);
+      if (value !== "" && budgetAmount <= 0) {
+        setBudgetError("Budget amount cannot be negative or 0.");
+        return;
+      }
     }
 
-    const nextItem = {
-      category,
-      budget_amount: budgetAmount,
-      spent: spentAmount,
-      remaining: budgetAmount - spentAmount
-    };
-
-    setBudgetRows((currentRows) => [...currentRows, nextItem]);
-    setNewBudgetItem({ category: "", budget_amount: "", spent: "0" });
-    setIsBudgetModalOpen(false);
+    if (budgetError) {
+      setBudgetError("");
+    }
   };
 
+  const handleBudgetSubmit = async (event) => {
+    event.preventDefault();
+    const category = newBudgetItem.category.trim();
+    const budgetAmount = Number(newBudgetItem.budget_amount);
+    if (!category || Number.isNaN(budgetAmount)) {
+      setBudgetError("Please enter a valid category and budget amount.");
+      return;
+    }
+    if (budgetAmount <= 0) {
+      setBudgetError("Budget amount cannot be negative or 0.");
+      return;
+    }
+    if (budgetrows.some(row => row.category.toLowerCase() === category.toLowerCase())) {
+      setBudgetError("This category already exists in the budget.");
+      return;
+    }
+    try {
+      const response = await fetch("http://127.0.0.1:8000/addbudget", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          category,
+          budget_amount: budgetAmount,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.detail || "Failed to add budget item.");
+      }
+      setBudgetError("");
+      setNewBudgetItem({ category: "", budget_amount: "" });
+      setIsBudgetModalOpen(false);
+      loadBudget();
+    } catch (error) {
+      setBudgetError(error.message || "An error occurred while adding the budget item.");
+    }
+  };
   return (
     <div className="app">
       <aside className="sidebar">
@@ -224,7 +257,10 @@ function Analytics() {
                   className="budget-add-btn"
                   type="button"
                   aria-label="Add budget item"
-                  onClick={() => setIsBudgetModalOpen(true)}
+                  onClick={() => {
+                    setBudgetError("");
+                    setIsBudgetModalOpen(true);
+                  }}
                 >
                   +
                 </button>
@@ -278,7 +314,10 @@ function Analytics() {
         </section>
 
         {isBudgetModalOpen && (
-          <div className="budget-modal-overlay" onClick={() => setIsBudgetModalOpen(false)}>
+          <div className="budget-modal-overlay" onClick={() => {
+            setBudgetError("");
+            setIsBudgetModalOpen(false);
+          }}>
             <div className="budget-modal" onClick={(event) => event.stopPropagation()}>
               <div className="budget-modal-header">
                 <h3>Add budget item</h3>
@@ -286,13 +325,16 @@ function Analytics() {
                   type="button"
                   className="budget-modal-close"
                   aria-label="Close budget modal"
-                  onClick={() => setIsBudgetModalOpen(false)}
+                  onClick={() => {
+                    setBudgetError("");
+                    setIsBudgetModalOpen(false);
+                  }}
                 >
                   ×
                 </button>
               </div>
 
-              <form onSubmit={handleBudgetSubmit} className="budget-modal-form">
+              <form className="budget-modal-form" onSubmit={handleBudgetSubmit}>
                 <label>
                   Category
                   <input
@@ -316,25 +358,17 @@ function Analytics() {
                     placeholder="0.00"
                   />
                 </label>
-
-                <label>
-                  Amount spent
-                  <input
-                    type="number"
-                    name="spent"
-                    min="0"
-                    step="0.01"
-                    value={newBudgetItem.spent}
-                    onChange={handleBudgetInputChange}
-                    placeholder="0.00"
-                  />
-                </label>
-
+                {budgetError && (
+                  <p style={{ color: "#d93025", margin: "8px 0 0", fontSize: "0.9rem" }}>{budgetError}</p>
+                )}
                 <div className="budget-modal-actions">
-                  <button type="button" className="budget-modal-cancel" onClick={() => setIsBudgetModalOpen(false)}>
+                  <button type="button" className="budget-modal-cancel" onClick={() => {
+                    setBudgetError("");
+                    setIsBudgetModalOpen(false);
+                  }}>
                     Cancel
                   </button>
-                  <button type="submit" className="budget-modal-save">
+                  <button  type="submit" className="budget-modal-save" >
                     Add item
                   </button>
                 </div>

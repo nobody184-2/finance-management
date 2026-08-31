@@ -165,8 +165,6 @@ def get_budget():
 def add_transaction(payload: TransactionList):
    if not payload.transactions:
        raise HTTPException(status_code=400, detail="No transactions provided")
-   inspector = inspect(engine)
-   columns = {column["name"] for column in inspector.get_columns("finance")}
    with engine.begin() as connection:
        for transaction in payload.transactions:
            query = text(
